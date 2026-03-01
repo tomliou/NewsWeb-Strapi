@@ -113,7 +113,7 @@ export default {
             description: art.description,
             source: art.source,
             url: art.url,
-            category: { connect: [categoryDocumentId] },
+            category: categoryDocumentId,
             publishedAt,
           },
         });

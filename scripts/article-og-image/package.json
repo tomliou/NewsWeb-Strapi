@@ -1,0 +1,14 @@
+{
+  "name": "article-og-image",
+  "version": "1.0.0",
+  "private": true,
+  "description": "從新聞 URL 抓取 og:image 並上傳至 Strapi Article 的 image 欄位",
+  "type": "module",
+  "scripts": {
+    "sync": "node sync.js",
+    "sync:dry": "node sync.js --dry"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0"
+  }
+}
