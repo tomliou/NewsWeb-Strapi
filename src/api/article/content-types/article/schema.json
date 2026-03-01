@@ -1,0 +1,48 @@
+{
+  "kind": "collectionType",
+  "collectionName": "articles",
+  "info": {
+    "singularName": "article",
+    "pluralName": "articles",
+    "displayName": "Article",
+    "description": "新聞文章，欄位對應 NewsWeb NewsCard：id, title, description, source, date, href, image"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "attributes": {
+    "title": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "text",
+      "required": true,
+      "description": "摘要/描述，對應 NewsCard description"
+    },
+    "source": {
+      "type": "string",
+      "required": true,
+      "description": "來源名稱，如：yahoo 科技新聞"
+    },
+    "url": {
+      "type": "string",
+      "required": true,
+      "description": "外部連結，對應 NewsCard href"
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "required": false,
+      "allowedTypes": ["images"],
+      "description": "封面圖，API 回傳時需補 STRAPI_URL 成完整 image URL"
+    },
+    "category": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::category.category",
+      "required": true,
+      "description": "所屬分類，對應首頁 Tab 篩選"
+    }
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "kind": "collectionType",
+  "collectionName": "categories",
+  "info": {
+    "singularName": "category",
+    "pluralName": "categories",
+    "displayName": "Category",
+    "description": "新聞分類，對應 NewsWeb 首頁 Tab：科技、財經、社會、討論"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "attributes": {
+    "name": {
+      "type": "string",
+      "required": true,
+      "description": "顯示名稱，如：科技、財經、社會、討論"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "name",
+      "required": true,
+      "description": "URL/篩選用，與 NewsWeb 一致：tech | finance | social | discussion"
+    },
+    "sourceLabel": {
+      "type": "string",
+      "description": "選填，該分類下的來源顯示文字，如：yahoo 科技新聞"
+    }
+  }
+}
