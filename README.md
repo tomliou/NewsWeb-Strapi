@@ -40,6 +40,17 @@ Strapi gives you many possible deployment options for your project including [St
 yarn strapi deploy
 ```
 
+## 📡 Article API 網址
+
+本專案 Article 的 REST API 路徑為 `/api/articles`，由 Strapi 依 content type 的 `pluralName` 自動產生（見 `src/api/article/content-types/article/schema.json`、`src/api/article/routes/article.ts`）。
+
+| 環境 | 網址 |
+|------|------|
+| **正式站（Strapi Cloud）** | https://active-trust-e46c30f868.strapiapp.com/api/articles |
+| **本機** | http://localhost:1337/api/articles |
+
+前端請用環境變數設定 Strapi 的 base URL（例如 `NEXT_PUBLIC_STRAPI_URL`），再串接 `/api/articles`、`/api/articles/:id` 等路徑。更多說明見 `docs/`。
+
 ## 📚 Learn more
 
 - [Resource center](https://strapi.io/resource-center) - Strapi resource center.
