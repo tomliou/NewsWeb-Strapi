@@ -1,8 +1,11 @@
 /**
- * 從 Article 的 url 抓取該頁的 og:image，上傳至 Strapi 並寫回 Article 的 image 欄位。
+ * 從 Article 的 url 直接抓取該頁的 og:image 與 page description，寫回 Strapi。
+ * - og:image → 下載上傳至 Strapi，寫入 Article 的 image 欄位
+ * - page description（og:description 或 meta description）→ 寫入 Article 的 description 欄位
+ *
  * 使用方式：在專案根目錄或本資料夾執行
  *   node scripts/article-og-image/sync.js
- *   node scripts/article-og-image/sync.js --dry   （只列出會處理的項目，不實際上傳）
+ *   node scripts/article-og-image/sync.js --dry   （只列出會處理的項目，不實際寫入）
  *
  * 環境變數（可放在專案根目錄 .env 或本資料夾 .env）：
  *   STRAPI_URL=http://localhost:1337
@@ -43,23 +46,23 @@ const STRAPI_URL = (process.env.STRAPI_URL || 'http://localhost:1337').replace(/
 const STRAPI_API_TOKEN = process.env.STRAPI_API_TOKEN;
 const DRY = process.argv.includes('--dry');
 
-function fetchHtml(url) {
-  return new Promise((resolve, reject) => {
-    const lib = url.startsWith('https') ? httpsGet : httpGet;
-    const req = lib(url, { headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsWeb-OGImage/1.0)' }, timeout: 15000 }, (res) => {
-      const chunks = [];
-      res.on('data', (c) => chunks.push(c));
-      res.on('end', () => resolve(Buffer.concat(chunks).toString('utf8')));
-    });
-    req.on('error', reject);
-    req.on('timeout', () => { req.destroy(); reject(new Error('timeout')); });
+/** 用 fetch 跟隨重定向，短網址會跳到最終頁再抓 og:image */
+async function fetchHtml(url) {
+  const res = await fetch(url, {
+    redirect: 'follow',
+    headers: { 'User-Agent': 'Mozilla/5.0 (compatible; NewsWeb-OGImage/1.0)' },
+    signal: AbortSignal.timeout(15000),
   });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const html = await res.text();
+  return { html, finalUrl: res.url };
 }
 
 function getOgImageUrl(html, pageUrl) {
   const $ = load(html);
   let ogImage = $('meta[property="og:image"]').attr('content') || $('meta[name="og:image"]').attr('content');
   if (!ogImage) return null;
+  ogImage = ogImage.trim();
   if (ogImage.startsWith('//')) ogImage = 'https:' + ogImage;
   if (ogImage.startsWith('/')) {
     try {
@@ -68,6 +71,16 @@ function getOgImageUrl(html, pageUrl) {
     } catch (_) {}
   }
   return ogImage;
+}
+
+/** 從 HTML 抓取 page description：優先 og:description，其次 meta name="description" */
+function getPageDescription(html) {
+  const $ = load(html);
+  const og = $('meta[property="og:description"]').attr('content');
+  if (og && og.trim()) return og.trim();
+  const meta = $('meta[name="description"]').attr('content');
+  if (meta && meta.trim()) return meta.trim();
+  return null;
 }
 
 function downloadFile(url) {
@@ -97,22 +110,57 @@ async function strapiGetArticles() {
   return Array.isArray(data.data) ? data.data : data.data ? [data.data] : [];
 }
 
-async function strapiUploadAndLink(filePath, documentId, field = 'image') {
-  const form = new FormData();
-  const blob = new Blob([readFileSync(filePath)]);
-  const name = filePath.split(/[/\\]/).pop() || 'og-image.jpg';
-  form.append('files', blob, name);
-  form.append('ref', 'api::article.article');
-  form.append('refId', documentId);
-  form.append('field', field);
+function getMimeType(filePath) {
+  const name = (filePath.split(/[/\\]/).pop() || '').toLowerCase();
+  if (name.endsWith('.png')) return 'image/png';
+  if (name.endsWith('.webp')) return 'image/webp';
+  return 'image/jpeg';
+}
 
-  const res = await fetch(`${STRAPI_URL}/api/upload`, {
+/** 更新 Article 欄位（只傳要改的欄位） */
+async function strapiPatchArticle(documentId, data) {
+  const res = await fetch(`${STRAPI_URL}/api/articles/${documentId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ data }),
+  });
+  if (!res.ok) throw new Error(`PATCH article: ${res.status} ${await res.text()}`);
+  return res.json();
+}
+
+/** 先上傳檔案（不帶 ref），再 PATCH 文章關聯 image（可一併寫入 description） */
+async function strapiUploadAndLink(filePath, documentId, extraData = {}) {
+  const form = new FormData();
+  const buffer = readFileSync(filePath);
+  const name = filePath.split(/[/\\]/).pop() || 'og-image.jpg';
+  const mimeType = getMimeType(filePath);
+  const blob = new Blob([buffer], { type: mimeType });
+  form.append('files', blob, name);
+
+  const uploadRes = await fetch(`${STRAPI_URL}/api/upload`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${STRAPI_API_TOKEN}` },
     body: form,
   });
-  if (!res.ok) throw new Error(`Upload: ${res.status} ${await res.text()}`);
-  return res.json();
+  if (!uploadRes.ok) throw new Error(`Upload: ${uploadRes.status} ${await uploadRes.text()}`);
+  const uploadData = await uploadRes.json();
+  const fileId = Array.isArray(uploadData) ? uploadData[0]?.id : uploadData?.id ?? uploadData?.[0]?.id;
+  if (fileId == null) throw new Error('Upload 回傳無 file id');
+
+  const payload = { image: fileId, ...extraData };
+  const patchRes = await fetch(`${STRAPI_URL}/api/articles/${documentId}`, {
+    method: 'PUT',
+    headers: {
+      Authorization: `Bearer ${STRAPI_API_TOKEN}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ data: payload }),
+  });
+  if (!patchRes.ok) throw new Error(`PATCH article: ${patchRes.status} ${await patchRes.text()}`);
+  return patchRes.json();
 }
 
 async function main() {
@@ -123,28 +171,47 @@ async function main() {
   }
 
   const articles = await strapiGetArticles();
-  const withoutImage = articles.filter((a) => !a.image?.id && !a.image?.documentId);
-  const withUrl = withoutImage.filter((a) => a.url);
+  const hasUrl = (a) => a.url && a.url.trim();
+  const noImage = (a) => !a.image?.id && !a.image?.documentId;
+  const noDescription = (a) => {
+    const d = a.description == null ? '' : String(a.description).trim();
+    return !d || d === '-';
+  };
+  const toProcess = articles.filter((a) => hasUrl(a) && (noImage(a) || noDescription(a)));
 
-  console.log(`Article 總數: ${articles.length}, 無 image: ${withoutImage.length}, 有 url 可處理: ${withUrl.length}`);
+  console.log(
+    `Article 總數: ${articles.length}, 有 url 且缺 image 或 description: ${toProcess.length}`
+  );
   if (DRY) {
-    withUrl.forEach((a) => console.log(`  - ${a.documentId} ${a.title?.slice(0, 40)}... ${a.url}`));
+    toProcess.forEach((a) => {
+      const needs = [noImage(a) && 'image', noDescription(a) && 'description'].filter(Boolean);
+      console.log(`  - ${a.documentId} ${a.title?.slice(0, 40)}... 缺: ${needs.join(', ')}`);
+    });
     return;
   }
 
-  for (const article of withUrl) {
+  for (const article of toProcess) {
     const { documentId, title, url } = article;
+    const needImage = noImage(article);
+    const needDesc = noDescription(article);
     let tmpPath;
     try {
-      const html = await fetchHtml(url);
-      const ogUrl = getOgImageUrl(html, url);
-      if (!ogUrl) {
+      const { html, finalUrl } = await fetchHtml(url);
+      const ogUrl = needImage ? getOgImageUrl(html, finalUrl) : null;
+      const description = needDesc ? getPageDescription(html) : null;
+
+      if (needImage && ogUrl) {
+        tmpPath = await downloadFile(ogUrl);
+        await strapiUploadAndLink(tmpPath, documentId, description ? { description } : {});
+        console.log(`已更新 image${description ? ' + description' : ''}: ${title?.slice(0, 40)}...`);
+      } else if (needDesc && description) {
+        await strapiPatchArticle(documentId, { description });
+        console.log(`已更新 description: ${title?.slice(0, 40)}...`);
+      } else if (needImage && !ogUrl) {
         console.log(`跳過（無 og:image）: ${title?.slice(0, 40)}...`);
-        continue;
+      } else {
+        console.log(`跳過（無 description）: ${title?.slice(0, 40)}...`);
       }
-      tmpPath = await downloadFile(ogUrl);
-      await strapiUploadAndLink(tmpPath, documentId);
-      console.log(`已更新 image: ${title?.slice(0, 40)}...`);
     } catch (e) {
       console.warn(`失敗 ${title?.slice(0, 40)}...: ${e.message}`);
     } finally {
