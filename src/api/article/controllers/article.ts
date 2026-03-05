@@ -37,6 +37,18 @@ function getPageDescriptionFromHtml(html: string): string | null {
 }
 
 export default factories.createCoreController('api::article.article', ({ strapi }) => ({
+  // 覆寫 find，自動帶 category 和 image
+  async find(ctx) {
+    ctx.query = { ...ctx.query, populate: { category: true, image: true } };
+    return await super.find(ctx);
+  },
+
+  // 覆寫 findOne，自動帶 category 和 image
+  async findOne(ctx) {
+    ctx.query = { ...ctx.query, populate: { category: true, image: true } };
+    return await super.findOne(ctx);
+  },
+
   async getOgFromUrl(ctx) {
     const url = ctx.query?.url;
     if (!url || typeof url !== 'string') {
