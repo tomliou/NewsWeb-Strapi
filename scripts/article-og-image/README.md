@@ -63,6 +63,35 @@ node scripts/article-og-image/sync.js --dry
 - 若該頁沒有 og:image 或 description，該欄位會跳過，其他欄位仍會嘗試更新
 - 需可連到新聞網址與 Strapi，請確認網路與防火牆設定
 
+## 從 URL 直接建立 Article（import-from-urls.js）
+
+可依「多個新聞 URL」一次抓 og:title、og:description、og:image，並在 Strapi **建立新文章**。
+
+### 使用方式
+
+```bash
+# 專案根目錄執行（先 cd scripts/article-og-image && npm install）
+node scripts/article-og-image/import-from-urls.js "https://新聞1" "https://新聞2"
+
+# 只預覽不寫入
+node scripts/article-og-image/import-from-urls.js --dry "https://新聞1"
+
+# 從檔案讀 URL（一行一個）
+node scripts/article-og-image/import-from-urls.js --file urls.txt
+```
+
+### 環境變數
+
+除 `STRAPI_URL`、`STRAPI_API_TOKEN` 外，可選：
+
+- **`DEFAULT_CATEGORY_SLUG`**：預設分類 slug（如 `tech`、`finance`）；不設則用 Strapi 第一個分類。
+
+### 權限
+
+API Token 需有：Article 的 **create**、Upload 的 **upload**、Category 的 **find**。
+
+---
+
 ## 即時讀取 OG 圖（不存 Strapi）
 
 若希望「不跑腳本、直接從某個 URL 讀 og:image 或 description」，可改用 Strapi 提供的 API：  
