@@ -36,20 +36,23 @@ function getPageDescriptionFromHtml(html: string): string | null {
   return getMetaContent(html, 'og:description') ?? getMetaContent(html, 'description');
 }
 
-export default factories.createCoreController('api::article.article', ({ strapi }) => ({
-  // 覆寫 find，自動帶 category 和 image
-  async find(ctx) {
-    ctx.query = { ...ctx.query, populate: { category: true, image: true } };
-    return await super.find(ctx);
-  },
+export default factories.createCoreController('api::article.article', ({ strapi }) => {
+  const { find, findOne } = strapi.controller('api::article.article');
 
-  // 覆寫 findOne，自動帶 category 和 image
-  async findOne(ctx) {
-    ctx.query = { ...ctx.query, populate: { category: true, image: true } };
-    return await super.findOne(ctx);
-  },
+  return {
+    // 覆寫 find，自動帶 category 和 image
+    async find(ctx: any) {
+      ctx.query = { ...ctx.query, populate: { category: true, image: true } };
+      return find(ctx);
+    },
 
-  async getOgFromUrl(ctx) {
+    // 覆寫 findOne，自動帶 category 和 image
+    async findOne(ctx: any) {
+      ctx.query = { ...ctx.query, populate: { category: true, image: true } };
+      return findOne(ctx);
+    },
+
+    async getOgFromUrl(ctx: any) {
     const url = ctx.query?.url;
     if (!url || typeof url !== 'string') {
       return ctx.badRequest('請提供 query 參數 url');
@@ -83,4 +86,4 @@ export default factories.createCoreController('api::article.article', ({ strapi 
       return ctx.badRequest(`讀取 URL 失敗: ${msg}`);
     }
   },
-}));
+}});
