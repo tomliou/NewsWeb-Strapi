@@ -4,7 +4,7 @@ const CATEGORIES = [
   { name: '科技', slug: 'tech', sourceLabel: 'yahoo 科技新聞' },
   { name: '財經', slug: 'finance', sourceLabel: '東森新聞雲 財經新聞' },
   { name: '社會', slug: 'social', sourceLabel: 'Google 社會新聞' },
-  { name: '討論', slug: 'discussion', sourceLabel: 'Dcard 討論新聞' },
+  { name: '娛樂', slug: 'entertainment', sourceLabel: 'Dcard 娛樂新聞' },
 ] as const;
 
 const SAMPLE_ARTICLES: Array<{
@@ -59,16 +59,16 @@ const SAMPLE_ARTICLES: Array<{
   {
     title: '網友熱議：遠距工作是否該納入勞基法',
     description: 'Dcard 職場版發起討論，多數網友支持遠距工作權益法制化，也有聲音認為彈性與保障之間需取得平衡。',
-    source: 'Dcard 討論新聞',
-    url: 'https://example.com/discussion-1',
-    categorySlug: 'discussion',
+    source: 'Dcard 娛樂新聞',
+    url: 'https://example.com/entertainment-1',
+    categorySlug: 'entertainment',
   },
   {
     title: '開箱文爆紅：平價耳機 CP 值引發討論',
     description: '網友分享某款平價耳機開箱心得，音質與降噪表現獲好評，貼文引發大量留言與購買連結分享。',
-    source: 'Dcard 討論新聞',
-    url: 'https://example.com/discussion-2',
-    categorySlug: 'discussion',
+    source: 'Dcard 娛樂新聞',
+    url: 'https://example.com/entertainment-2',
+    categorySlug: 'entertainment',
   },
 ];
 

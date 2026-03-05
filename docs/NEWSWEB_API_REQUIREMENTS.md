@@ -33,7 +33,7 @@
 | tech | 科技 | yahoo 科技新聞 |
 | finance | 財經 | 東森新聞雲 財經新聞 |
 | social | 社會 | Google 社會新聞 |
-| discussion | 討論 | Dcard 討論新聞 |
+| entertainment | 娛樂 | Dcard 娛樂新聞 |
 
 ---
 
@@ -52,7 +52,7 @@
 - **用途**：首頁依分類顯示新聞卡片。
 - **建議路徑**：`GET /api/articles`
 - **Query 參數**：
-  - `filters[category][slug][$eq]=tech`（或 finance、social、discussion）
+  - `filters[category][slug][$eq]=tech`（或 finance、social、entertainment）
   - `pagination[page]=1&pagination[pageSize]=6`（首頁每 Tab 目前 6 筆）
   - `sort=publishedAt:desc`
   - `populate=category,image`（若圖片、分類要一起回傳）
@@ -102,14 +102,14 @@
    - Strapi 的 media 常回傳相對路徑（如 `/uploads/...`），前端或 Next.js API route 需加上 `process.env.STRAPI_URL` 組成完整 URL。
 
 3. **分類**  
-   - 在 Strapi 建立 Category（slug: tech, finance, social, discussion），Article 關聯 Category；前端傳的 `category` 即對應 `category.slug`。
+   - 在 Strapi 建立 Category（slug: tech, finance, social, entertainment），Article 關聯 Category；前端傳的 `category` 即對應 `category.slug`。
 
 ---
 
 ## 6. 小結
 
 - 新聞 API 需回傳：**id, title, description, source, date, href, image**，且支援依**分類 slug** 篩選。
-- 分類與首頁 Tab 一致：**tech / finance / social / discussion**。
+- 分類與首頁 Tab 一致：**tech / finance / social / entertainment**。
 - 收藏功能目前用 localStorage（與 `/api/bookmarks`），不需 Strapi 提供收藏 API；若未來改為後端存收藏，可再擴充。
 
 ---
@@ -125,6 +125,6 @@
 
 **下一步：**
 
-1. 執行 `npm run develop` 啟動 Strapi，後台建立四個分類（slug: tech, finance, social, discussion）與數筆文章。
+1. 執行 `npm run develop` 啟動 Strapi，後台建立四個分類（slug: tech, finance, social, entertainment）與數筆文章。
 2. **Settings → Users & Permissions → Public**：對 Article、Category 開放 `find`、`findOne`。
 3. 在 NewsWeb 的 `.env.local` 設定 `STRAPI_URL=http://localhost:1337`，並修改 `src/app/api/news/route.ts` 改打 Strapi 並轉成 NewsCard 格式。

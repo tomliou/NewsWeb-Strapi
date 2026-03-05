@@ -20,7 +20,7 @@
       "type": "uid",
       "targetField": "name",
       "required": true,
-      "description": "URL/篩選用，與 NewsWeb 一致：tech | finance | social | discussion"
+      "description": "URL/篩選用，與 NewsWeb 一致：tech | finance | social | entertainment"
     },
     "sourceLabel": {
       "type": "string",
