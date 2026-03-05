@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>文章 API 預覽</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 1rem; background: #1a1a1a; color: #e0e0e0; }
+    h1 { font-size: 1.25rem; margin-bottom: 0.5rem; }
+    p { color: #999; font-size: 0.9rem; margin-bottom: 1rem; }
+    pre { background: #252525; padding: 1rem; border-radius: 8px; overflow: auto; font-size: 12px; line-height: 1.4; }
+    .key { color: #7dd3fc; }
+    .str { color: #86efac; }
+    .num { color: #fcd34d; }
+    .err { color: #f87171; }
+    a { color: #7dd3fc; }
+  </style>
+</head>
+<body>
+  <h1>文章 API 回傳格式預覽</h1>
+  <p>下方為 <code>GET /api/articles?pagination[pageSize]=1</code> 的範例（含 category、image）。<br>
+  本機預覽：先執行 <code>npm run develop</code>，再開 <a href="http://localhost:1337/api/articles?pagination[pageSize]=1" target="_blank">http://localhost:1337/api/articles?pagination[pageSize]=1</a></p>
+  <pre id="out">載入中…</pre>
+  <script>
+    const sample = {
+      data: [
+        {
+          id: 44,
+          documentId: "faz9nbbqzocrt3lkre0k4ggu",
+          title: "賈永婕邀爬101、嗆蔣中正繼續罰坐",
+          description: "台北101董事長賈永婕為「北洋軍後代」…",
+          source: "Google 社會新聞",
+          url: "https://reurl.cc/DbN8ZN",
+          createdAt: "2026-03-01T12:46:37.136Z",
+          updatedAt: "2026-03-02T14:14:35.131Z",
+          publishedAt: "2026-03-02T14:14:35.133Z",
+          category: {
+            data: {
+              id: 3,
+              documentId: "xxx-category-id",
+              name: "社會",
+              slug: "social"
+            }
+          },
+          image: {
+            data: {
+              id: 2,
+              documentId: "vo84i2vyis5rr72mleyp2h28",
+              url: "https://active-trust-e46c30f868.media.strapiapp.com/..."
+            }
+          }
+        }
+      ],
+      meta: { pagination: { page: 1, pageSize: 1, pageCount: 1, total: 50 } }
+    };
+    document.getElementById('out').textContent = JSON.stringify(sample, null, 2);
+  </script>
+</body>
+</html>
